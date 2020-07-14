@@ -4,8 +4,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.Manifest
 import android.content.pm.PackageManager
+import android.media.Image
 import android.net.Uri
 import android.util.Log
+import android.util.Size
 import android.widget.Button
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -20,42 +22,228 @@ import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
-typealias LumaListener = (luma: Double) -> Unit
+typealias YListener = (YStuff : Double) -> Unit
+typealias UListener = (UStuff : Double ) -> Unit
+typealias VListener = (VStuff : Double ) -> Unit
+typealias AllListener = (allListener : Double ) -> Unit
 
 class MainActivity : AppCompatActivity() {
+
+
+
+    private var whatIsThis: Double = 2311.00
+
+    fun whatsUp() {
+
+        print("hey bro what is this has $whatIsThis and i have $100 dollars gang")
+
+    }
+
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
 
+   // private val theGoodImage: ImageProxy = R.drawable.test_photo;
+
+    private val myImageTest = ImageAnalysis.Builder()
+    .setTargetResolution(Size(1280, 720))
+    .build()
+    .also {
+        it.setAnalyzer(cameraExecutor,
+            MainAnalyzer( //FIGURE OUT WTF LAMBDA SHIT IS
+                { YStuff -> Log.d("Photo stuff", "Average Y is $YStuff")},
+                { UStuff -> Log.d("Photo stuff", "Average UU is $UStuff")},
+                { VStuff -> Log.d("Photo stuff", "Average VVVVV is $VStuff")}
+            )
+        )
+    }
+
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
 
-    private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
+    private class MainAnalyzer(private val yListener: YListener,private val uListener: UListener,private val vListener: VListener) : ImageAnalysis.Analyzer {
 
+        //get data from phone
         private fun ByteBuffer.toByteArray(): ByteArray {
             rewind()    // Rewind the buffer to zero
             val data = ByteArray(remaining())
             get(data)   // Copy the buffer into a byte array
             return data // Return the byte array
+
         }
 
+        //figure out what type is an image proxy
         override fun analyze(image: ImageProxy) {
 
-            val buffer = image.planes[0].buffer
-            val data = buffer.toByteArray()
-            val pixels = data.map { it.toInt() and 0xFF }
-            val luma = pixels.average()
+            //Y cr cb
+            val bufferY = image.planes[0].buffer //Y
+            val dataY = bufferY.toByteArray()
+            val pixelsY = dataY.map { it.toInt() and 0xFF } //what does map mean
+            val YAverage = pixelsY.average()
 
-            listener(luma)
+            val bufferU = image.planes[1].buffer //V
+            val dataU = bufferU.toByteArray()
+            val pixelsU = dataU.map { it.toInt() and 0xFF } //what does map mean
+            val UAverage = pixelsU.average()
+
+            val bufferV = image.planes[2].buffer //V
+            val dataV = bufferV.toByteArray()
+            val pixelsV = dataV.map { it.toInt() and 0xFF } //what does map mean
+            val VAverage = pixelsV.average()
+
+            yListener(YAverage)
+            uListener(UAverage)
+            vListener(VAverage)
+
+
 
             image.close()
         }
     }
 
+    private class MainImageComparator(private val yListener: YListener, private val uListener: UListener, private val vListener: VListener) : ImageAnalysis.Analyzer {
+
+
+
+        //get data from phone
+        private fun ByteBuffer.toByteArray(): ByteArray {
+            rewind()    // Rewind the buffer to zero
+            val data = ByteArray(remaining())
+            get(data)   // Copy the buffer into a byte array
+            return data // Return the byte array
+
+        }
+
+        //figure out what type is an image proxy
+        override fun analyze(image: ImageProxy) {
+
+            //Y cr cb
+            val bufferY = image.planes[0].buffer //Y
+            val dataY = bufferY.toByteArray()
+            val pixelsY = dataY.map { it.toInt() and 0xFF } //Transforms an array of data (prob int), into 255 hex stuff, deletes everything
+            // before the last 8 bits into 0's 000000000 11111111
+            val YAverage = pixelsY.average()
+
+            val bufferU = image.planes[1].buffer //V
+            val dataU = bufferU.toByteArray()
+            val pixelsU = dataU.map { it.toInt() and 0xFF }
+            val UAverage = pixelsU.average()
+
+            val bufferV = image.planes[2].buffer //V
+            val dataV = bufferV.toByteArray()
+            val pixelsV = dataV.map { it.toInt() and 0xFF }
+            val VAverage = pixelsV.average()
+
+            yListener(YAverage)
+            uListener(UAverage)
+            vListener(VAverage)
+
+            image.close()
+        }
+    }
+
+    //region the other three
+//    private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
+//
+//        //this stuff gets the raw data?? return an array of bytes
+//        //this thing is run a lot
+//        private fun ByteBuffer.toByteArray(): ByteArray {
+//            rewind()    // Rewind the buffer to zero
+//            val data = ByteArray(remaining())
+//            get(data)   // Copy the buffer into a byte array
+//       //     Log.i("Return stuff", data.toString())
+//            return data // Return the byte array
+//
+//        }
+//
+//        //figure out what type is an image proxy
+//        override fun analyze(image: ImageProxy) {
+//
+//            //Y cr cb
+//            val buffer = image.planes[0].buffer //Y
+//            val data = buffer.toByteArray()
+//            val pixels = data.map { it.toInt() and 0xFF } //what does map mean
+//            val luma = pixels.average()
+//
+//            val buffer1 = image.planes[1].buffer //U
+//            val data1 = buffer.toByteArray()
+//            val pixels1 = data.map { it.toInt() and 0xFF }
+//            val U1 = pixels.average()
+//
+//            val buffer2 = image.planes[2].buffer //V
+//            val data2 = buffer.toByteArray()
+//            val pixels2 = data.map { it.toInt() and 0xFF }
+//            val V2 = pixels.average()
+//
+//            listener(luma)
+////            listener(U1)
+////            listener(V2)
+//
+//            image.close()
+//        }
+//    }
+//
+//    private class UAnalyzer(private val listener: UListener) : ImageAnalysis.Analyzer {
+//
+//        private fun ByteBuffer.toByteArray(): ByteArray {
+//            rewind()    // Rewind the buffer to zero
+//            val data = ByteArray(remaining())
+//            get(data)   // Copy the buffer into a byte array
+//           // Log.i("Return stuff", data.toString())
+//            return data
+//        }
+//
+//        override fun analyze(image: ImageProxy) {
+//
+//            val buffer = image.planes[1].buffer //U
+//            val data = buffer.toByteArray()
+//            val pixels = data.map { it.toInt() and 0xFF }
+//            val U1 = pixels.average()
+//
+//            val buffer2 = image.planes[2].buffer //V
+//            val data2 = buffer.toByteArray()
+//            val pixels2 = data.map { it.toInt() and 0xFF }
+//            val V2 = pixels.average()
+//
+//              listener(U1)
+////            listener(V2)
+//
+//            image.close()
+//        }
+//    }
+//
+//    private class VAnalyzer(private val listener: VListener) : ImageAnalysis.Analyzer {
+//
+//        private fun ByteBuffer.toByteArray(): ByteArray {
+//            rewind()    // Rewind the buffer to zero
+//            val data = ByteArray(remaining())
+//            get(data)   // Copy the buffer into a byte array
+//           // Log.i("Return stuff", data.toString())
+//            return data
+//        }
+//
+//        override fun analyze(image: ImageProxy) {
+//
+//            val buffer = image.planes[2].buffer //V
+//            val data = buffer.toByteArray()
+//            val pixels = data.map { it.toInt() and 0xFF }
+//            val V2 = pixels.average()
+//
+//            listener(V2)
+//
+//            image.close()
+//        }
+//    }
+   //endregion
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+      //  val testImage = R.drawable.test_photo
+
+
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -70,12 +258,15 @@ class MainActivity : AppCompatActivity() {
 
         outputDirectory = getOutputDirectory()
 
-        cameraExecutor = Executors.newSingleThreadExecutor()
-    }
+        cameraExecutor = Executors.newSingleThreadExecutor() //need to know this
+    } //end of on create section
 
+    //basically the onCreate function for the camera
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this) //no clue
+        //i think processCameraProvider is a class
 
+        //what is a runnable
         cameraProviderFuture.addListener(Runnable {
             // Used to bind the lifecycle of cameras to the lifecycle owner
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
@@ -88,11 +279,16 @@ class MainActivity : AppCompatActivity() {
                     .build()
 
             imageAnalyzer = ImageAnalysis.Builder()
+                .setTargetResolution(Size(1280, 720))
                     .build()
                     .also {
-                        it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-                            Log.d(TAG, "Average luminosity: $luma")
-                        })
+                        it.setAnalyzer(cameraExecutor,
+                            MainAnalyzer( //FIGURE OUT WTF LAMBDA SHIT IS
+                                { YStuff -> Log.d("Photo stuff", "Average Y is $YStuff")},
+                                { UStuff -> Log.d("Photo stuff", "Average UU is $UStuff")},
+                                { VStuff -> Log.d("Photo stuff", "Average VVVVV is $VStuff")}
+                            )
+                        )
                     }
 
             // Select back camera
@@ -114,6 +310,12 @@ class MainActivity : AppCompatActivity() {
 
 
     }
+
+    //Copy and paste luminosity another 2 times, change it for U and V, figure out where to output it
+    //for now take the average, then compare it to 3 different images, see which ever one is most similar
+    //pick that one as true.
+
+
 
     private fun takePhoto() {
         // Get a stable reference of the modifiable image capture use case
