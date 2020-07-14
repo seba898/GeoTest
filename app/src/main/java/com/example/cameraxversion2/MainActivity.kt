@@ -1,27 +1,26 @@
 package com.example.cameraxversion2
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
 import android.Manifest
 import android.content.pm.PackageManager
-import android.media.Image
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Bundle
 import android.util.Log
 import android.util.Size
-import android.widget.Button
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import java.util.concurrent.Executors
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+
 typealias YListener = (YStuff : Double) -> Unit
 typealias UListener = (UStuff : Double ) -> Unit
 typealias VListener = (VStuff : Double ) -> Unit
@@ -29,22 +28,15 @@ typealias AllListener = (allListener : Double ) -> Unit
 
 class MainActivity : AppCompatActivity() {
 
-
-
-    private var whatIsThis: Double = 2311.00
-
-    fun whatsUp() {
-
-        print("hey bro what is this has $whatIsThis and i have $100 dollars gang")
-
-    }
+    var icon = BitmapFactory.decodeResource(
+        resources,
+        R.drawable.test_photo
+    )
 
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
-
-   // private val theGoodImage: ImageProxy = R.drawable.test_photo;
 
     private val myImageTest = ImageAnalysis.Builder()
     .setTargetResolution(Size(1280, 720))
