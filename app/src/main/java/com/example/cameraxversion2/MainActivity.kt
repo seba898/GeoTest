@@ -3,6 +3,7 @@ package com.example.cameraxversion2
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.graphics.YuvImage
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -13,6 +14,8 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.convertTo
+import androidx.core.graphics.green
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.nio.ByteBuffer
@@ -28,28 +31,25 @@ typealias AllListener = (allListener : Double ) -> Unit
 
 class MainActivity : AppCompatActivity() {
 
-    var icon = BitmapFactory.decodeResource(
-        resources,
-        R.drawable.test_photo
-    )
-
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
 
-    private val myImageTest = ImageAnalysis.Builder()
-    .setTargetResolution(Size(1280, 720))
-    .build()
-    .also {
-        it.setAnalyzer(cameraExecutor,
-            MainAnalyzer( //FIGURE OUT WTF LAMBDA SHIT IS
-                { YStuff -> Log.d("Photo stuff", "Average Y is $YStuff")},
-                { UStuff -> Log.d("Photo stuff", "Average UU is $UStuff")},
-                { VStuff -> Log.d("Photo stuff", "Average VVVVV is $VStuff")}
-            )
-        )
-    }
+    //region random shit
+//    private val myImageTest = ImageAnalysis.Builder()
+//    .setTargetResolution(Size(1280, 720))
+//    .build()
+//    .also {
+//        it.setAnalyzer(cameraExecutor,
+//            MainAnalyzer( //FIGURE OUT WTF LAMBDA SHIT IS
+//                { YStuff -> Log.d("Photo stuff", "Average Y is $YStuff")},
+//                { UStuff -> Log.d("Photo stuff", "Average UU is $UStuff")},
+//                { VStuff -> Log.d("Photo stuff", "Average VVVVV is $VStuff")}
+//            )
+//        )
+//    }
+    //endregion
 
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
@@ -94,46 +94,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private class MainImageComparator(private val yListener: YListener, private val uListener: UListener, private val vListener: VListener) : ImageAnalysis.Analyzer {
-
-
-
-        //get data from phone
-        private fun ByteBuffer.toByteArray(): ByteArray {
-            rewind()    // Rewind the buffer to zero
-            val data = ByteArray(remaining())
-            get(data)   // Copy the buffer into a byte array
-            return data // Return the byte array
-
-        }
-
-        //figure out what type is an image proxy
-        override fun analyze(image: ImageProxy) {
-
-            //Y cr cb
-            val bufferY = image.planes[0].buffer //Y
-            val dataY = bufferY.toByteArray()
-            val pixelsY = dataY.map { it.toInt() and 0xFF } //Transforms an array of data (prob int), into 255 hex stuff, deletes everything
-            // before the last 8 bits into 0's 000000000 11111111
-            val YAverage = pixelsY.average()
-
-            val bufferU = image.planes[1].buffer //V
-            val dataU = bufferU.toByteArray()
-            val pixelsU = dataU.map { it.toInt() and 0xFF }
-            val UAverage = pixelsU.average()
-
-            val bufferV = image.planes[2].buffer //V
-            val dataV = bufferV.toByteArray()
-            val pixelsV = dataV.map { it.toInt() and 0xFF }
-            val VAverage = pixelsV.average()
-
-            yListener(YAverage)
-            uListener(UAverage)
-            vListener(VAverage)
-
-            image.close()
-        }
-    }
+//    private class MainImageComparator(private val yListener: YListener, private val uListener: UListener, private val vListener: VListener) {
+//
+//        //figure out what type is an image proxy
+//        fun analyze(image: YuvImage) {
+//
+//            //Y cr cb
+//            //var test = image.yuvFormat
+//
+////            val bufferY = image.planes[0].buffer //Y
+////            val dataY = bufferY.toByteArray()
+//            val pixelsY = dataY.map { it.toInt() and 0xFF } //Transforms an array of data (prob int), into 255 hex stuff, deletes everything
+//            // before the last 8 bits into 0's 000000000 11111111
+//            val YAverage = pixelsY.average()
+//
+//            val bufferU = image.planes[1].buffer //V
+//            val dataU = bufferU.toByteArray()
+//            val pixelsU = dataU.map { it.toInt() and 0xFF }
+//            val UAverage = pixelsU.average()
+//
+//            val bufferV = image.planes[2].buffer //V
+//            val dataV = bufferV.toByteArray()
+//            val pixelsV = dataV.map { it.toInt() and 0xFF }
+//            val VAverage = pixelsV.average()
+//
+//            yListener(YAverage)
+//            uListener(UAverage)
+//            vListener(VAverage)
+//
+//            image.close()
+//        }
+//    }
 
     //region the other three
 //    private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
