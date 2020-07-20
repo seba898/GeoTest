@@ -1,2 +1,0 @@
-include ':app'
-rootProject.name = "CameraX Version 2"
